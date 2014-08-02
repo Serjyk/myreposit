@@ -1,0 +1,264 @@
+//************	сигналы и слоты	***********************
+********************************************************
+********************************************************
+
+//Заголовочный файл
+
+#ifndef MYWINDOW_H
+#define MYWINDOW_H
+
+//Класс свойств шоу и др
+#include <QDialog>
+#include <QLabel>
+//Строка для воода текста
+#include <QLineEdit>
+//Для галочек
+#include <QCheckBox>
+//кнопки
+#include <QPushButton>
+//слои форматирования
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QMessageBox>
+
+class MyWindow : public QDialog
+{
+    //Макрос для обработки сигналов и слотов
+    Q_OBJECT
+
+public:
+    MyWindow(QWidget *parent=0);
+private:
+    QLabel *lbl;
+    QLineEdit *line;
+    QCheckBox *cb1;
+    QCheckBox *cb2;
+    QPushButton *ok;
+    QPushButton *close;
+private slots:
+    void OkClicked();
+    void textChange(QString str);
+signals:
+    void VerhReg(QString str);
+    void Invers(QString str);
+    void Simple(QString str);
+    void Compil(QString str);
+};
+
+class STR : public QObject
+{
+    Q_OBJECT
+
+public slots:
+    void Simple(QString str)
+    {
+        //отдельное окно
+        QMessageBox msg;
+        msg.setText(str);
+        msg.exec();
+    }
+
+    void Inversia(QString str)
+    {
+        QString result = str;
+        for(int i=str.size(),j=0;i>=0;i--,j++)
+        {
+            result[j] = str[i];
+        }
+        QMessageBox msg;
+        msg.setText(result);
+        msg.exec();
+    }
+
+    void VerhRegistr(QString str)
+    {
+        QString result;
+        result = str.toUpper();
+        QMessageBox msg;
+        msg.setText(result);
+        msg.exec();
+    }
+
+    void Compl(QString str)
+    {
+        QString result;
+        for(int i=str.size(),j=0;i>=0;i--,j++)
+                result[j]=str[i];
+        result=result.toUpper();
+        QMessageBox msg;
+        msg.setText(result);
+        msg.exec();
+    }
+
+
+};
+
+#endif // MYWINDOW_H
+
+
+
+
+
+
+
+******************************************************
+//файл исходных текстов
+
+#include "MyWindow.h"
+#include <QTextCodec>
+
+MyWindow::MyWindow(QWidget *parent) : QDialog(parent)
+{
+    //Для русского текста
+    QTextCodec::setCodecForTr(QTextCodec::codecForName("Windows-1251"));
+
+    lbl = new QLabel("Enter");
+    line = new QLineEdit;
+    lbl->setBuddy(line);
+
+    cb1 = new QCheckBox(tr("Верхний регистр"));
+    cb2 = new QCheckBox(tr("Инверсия"));
+
+    ok = new QPushButton("&OK");
+    // кнопку будет реагировать на enter
+
+    ok->setDefault(true);
+    //сделать не доступной кнопку
+    ok->setEnabled(false);
+    close = new QPushButton("Close");
+
+    QHBoxLayout *layout = new QHBoxLayout;
+    layout->addWidget(lbl);
+    layout->addWidget(line);
+
+    QVBoxLayout * left = new QVBoxLayout;
+    left->addLayout(layout);
+    left->addWidget(cb1);
+    left->addWidget(cb2);
+
+    QVBoxLayout *right = new QVBoxLayout;
+
+    right->addWidget(ok);
+    right->addWidget(close);
+
+    QHBoxLayout *main = new QHBoxLayout;
+
+    main->addLayout(left);
+    main->addLayout(right);
+
+    connect(line,SIGNAL(textChanged(QString)),this,SLOT(textChange(QString)));
+    connect(close,SIGNAL(clicked()),this,SLOT(close()));
+    connect(ok,SIGNAL(clicked()),this,SLOT(OkClicked()));
+
+    //метод QDialog. Поместить в окно
+    setLayout(main);
+
+    setWindowTitle("MessageBox");
+}
+
+void MyWindow::textChange(QString str)
+{
+    ok->setEnabled(!str.isEmpty());
+}
+
+void MyWindow::OkClicked()
+{
+    //Если 1 чекбокс с галочкой, то вызываем сигнал VerhReg и передаем текст
+    if(cb1->isChecked() && !cb2->isChecked())
+        emit VerhReg(line->text());
+    //Если 2 чекбокс с галочкой, то вызываем сигнал Invers и передаем текст
+    if(cb2->isChecked() && !cb1->isChecked())
+        emit Invers(line->text());
+    if(!cb1->isChecked() && !cb2->isChecked())
+        emit Simple(line->text());
+    if(cb1->isChecked() && cb2->isChecked())
+        emit Compil(line->text());
+}
+
+
+
+
+
+
+
+
+
+********************************************************
+//main.cpp
+
+//сигналы и слоты
+
+#include <QtGui/QApplication>
+//класс кнопок
+#include <QPushButton>
+//Счетчик
+#include <QSpinBox>
+//Ползунок
+#include <QSlider>
+//слой который будет располагать виджеты по горизонтали
+#include <QHBoxLayout>
+//слой который будет располагать виджеты по вертикали
+#include <QVBoxLayout>
+
+#include "MyWindow.h"
+
+
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+
+
+
+    /*
+    //1 этап
+    //создаем новый указатель на кнопку
+    //выделяем динамическую память
+    QPushButton *pb = new QPushButton("close");
+
+    //выводим нашу кнопку
+    pb->show();
+
+    //мета объектный компилятор
+    //объединяем сигнал кнопки pb и слота
+    QObject::connect(pb,SIGNAL(clicked()),&a,SLOT(quit()));*/
+
+    //2 этап
+    //создаем 2 виджета. Ползунок и счетчик
+    /*QSpinBox *sb = new QSpinBox;
+    QSlider *sl = new QSlider(Qt::Horizontal);
+
+    //присвоить максимум
+    sb->setMaximum(100);
+    sl->setMaximum(100);
+
+    QWidget *window = new QWidget;
+    //создаем новый слой
+    QHBoxLayout *layout = new QHBoxLayout;
+    //добавляем в этот слой 2 виджета
+    layout->addWidget(sb);
+    layout->addWidget(sl);
+    //Прикрепляем слой на виджет
+    window->setLayout(layout);
+    //Выводим виджет
+    window->show();
+
+    //объединяем сигнал счетчик и слайдер
+    QObject::connect(sb,SIGNAL(valueChanged(int)),sl,SLOT(setValue(int)));
+    QObject::connect(sl,SIGNAL(valueChanged(int)),sb,SLOT(setValue(int)));*/
+
+
+    //3 этап
+    MyWindow * window = new MyWindow;
+    window->show();
+
+    STR *n = new STR;
+    QObject::connect(window,SIGNAL(Simple(QString)),n,SLOT(Simple(QString)));
+    QObject::connect(window,SIGNAL(Invers(QString)),n,SLOT(Inversia(QString)));
+    QObject::connect(window,SIGNAL(VerhReg(QString)),n,SLOT(VerhRegistr(QString)));
+    QObject::connect(window,SIGNAL(Compil(QString)),n,SLOT(Compl(QString)));
+
+    return a.exec();
+}
+
+*****************************************************************************************************
